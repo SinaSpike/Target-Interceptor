@@ -1,9 +1,9 @@
-export class Element {
+ class PoweredElement {
   constructor(svg, id, x, y, speed, color) {
     this.svg = svg;
     this.id = id;
-    this.x = x;
-    this.y = y;
+    this.actualX = x;
+    this.actualY = y;
     this.initialY = y;
     this.speed = speed;
     this.color = color;
@@ -20,8 +20,8 @@ export class Element {
       this.svg.appendChild(this.element);
     }
 
-    this.element.setAttribute("cx", String(this.x));
-    this.element.setAttribute("cy", String(this.y));
+    this.element.setAttribute("cx", String(this.actualX));
+    this.element.setAttribute("cy", String(this.actualY));
   }
 
   remove() {
@@ -31,3 +31,46 @@ export class Element {
     }
   }
 }
+export class Seeker extends PoweredElement {
+  lastDx = 0;
+  lastDy= 0;
+
+  constructor(svg, id, x, y, speed) {
+    super(svg, id, x, y, speed, "Cyan");
+  }
+}
+
+export class Target extends PoweredElement {
+  detectionType;
+  lastDetectedY;
+  lastDetectedX;
+
+  constructor(svg, id, x, y, speed, detectionType) {
+    super(svg, id, x, y, speed, "Red");
+    this.detectionType = detectionType;
+    this.runUndetection();
+
+    this.lastDetectedX = x;
+    this.lastDetectedY = y;
+  }
+
+  runUndetection() {
+  let isBlocked = false;
+  const update = () => {
+    if (!isBlocked) {
+      this.lastDetectedX = this.actualX;
+      this.lastDetectedY = this.actualY;
+    }
+    requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+
+  setInterval(() => {
+    isBlocked = true;
+    setTimeout(() => {
+      isBlocked = false;
+    }, this.detectionType * 1000);
+  }, 5000);
+}
+}
+

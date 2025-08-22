@@ -1,4 +1,4 @@
-import { Element } from "./classes.js";
+import {Seeker, Target } from "./classes.js";
 
 const svg = document.getElementById("sim");
 const w = svg.clientWidth;
@@ -25,10 +25,12 @@ function buildTerrain() {
 svg.addEventListener("click", (e) => {
   const { offsetX: x, offsetY: y } = e;
 
-  if (!target) {
-    target = new Element(svg, "target", x, y, 3, "red");
-  } else if (!seeker) {
-    seeker = new Element(svg, "seeker", x, y, 4, "cyan");
+if (!target) {
+  const targetDetection = document.getElementById("detectionMode").value;
+
+  target = new Target(svg, "target", x, y, 3, targetDetection);
+} else if (!seeker) {
+    seeker = new Seeker(svg, "seeker", x, y, 4.5);
   }
 });
 
@@ -77,41 +79,42 @@ function updateTarget() {
 
   switch (targetMode) {
     case "linear":
-      target.x += target.speed;
+      target.actualX += target.speed;
       break;
     case "sine":
-      target.x += target.speed;
-      target.y = target.initialY + 40 * Math.sin(target.x / 40);
+      target.actualX += target.speed;
+      target.actualY = target.initialY + 40 * Math.sin(target.actualX / 40);
       break;
     case "random":
-      target.x += target.speed * (Math.random() / 2 + 1);
-      target.y += target.speed * (Math.random() / 2 + 1);
+      target.actualX += target.speed * (Math.random() / 2 + 1);
+      target.actualY += target.speed * (Math.random() / 2 + 1);
       break;
   }
 
   keepInBounds(target);
   target.draw();
-  trailTarget.push([target.x, target.y]);
+  trailTarget.push([target.actualX, target.actualY]);
 }
 
 function updateSeeker() {
   if (!seeker || !target) return false;
 
-  const dx = target.x - seeker.x;
-  const dy = target.y - seeker.y;
+  const dx = target.lastDetectedX - seeker.actualX;
+  const dy = target.lastDetectedY - seeker.actualY;
   const dist = Math.hypot(dx, dy);
 
-  if (dist < 9) {
+  if (Math.abs(target.actualX - seeker.actualX) < 10 &&
+     Math.abs(target.actualY - seeker.actualY) < 10) {
     updateStats();
     return true;
   }
 
-  seeker.x += (seeker.speed * dx) / dist;
-  seeker.y += (seeker.speed * dy) / dist;
+  seeker.actualX += (seeker.speed * dx) / dist;
+  seeker.actualY += (seeker.speed * dy) / dist;
 
   keepInBounds(seeker);
   seeker.draw();
-  trailSeeker.push([seeker.x, seeker.y]);
+  trailSeeker.push([seeker.actualX, seeker.actualY]);
   distance += seeker.speed;
 
   return false;
@@ -119,11 +122,11 @@ function updateSeeker() {
 
 // === Helpers ===
 function keepInBounds(element) {
-  if(element.x < 2 || element.x > w-2){
-    target.x = w - target.x; 
+  if(element.actualX < 7 || element.actualX > w-7){
+    target.actualX = w - target.actualX; 
   }
 
-  if(element.y < 2 || element.y > h-2) { target.y = h - target.y; } 
+  if(element.actualY < 7 || element.actualY > h-7) { target.actualY = h - target.actualY; } 
 }
 
 function drawTrail(points, color) {
