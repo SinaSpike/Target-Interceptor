@@ -1,0 +1,148 @@
+import { Element } from "./classes.js";
+
+const svg = document.getElementById("sim");
+const w = svg.clientWidth;
+const h = svg.clientHeight;
+
+let terrain = null;
+let target = null;
+let seeker = null;
+let targetMode = "static";
+let trailTarget = [];
+let trailSeeker = [];
+let startTime = null;
+let distance = 0;
+
+// === Terrain ===
+function buildTerrain() {
+  if (terrain) terrain.remove();
+  terrain = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  terrain.setAttribute("fill", "#333");
+  svg.appendChild(terrain);
+}
+
+// === Event Handlers ===
+svg.addEventListener("click", (e) => {
+  const { offsetX: x, offsetY: y } = e;
+
+  if (!target) {
+    target = new Element(svg, "target", x, y, 3, "red");
+  } else if (!seeker) {
+    seeker = new Element(svg, "seeker", x, y, 4, "cyan");
+  }
+});
+
+document.getElementById("startBtn").onclick = () => {
+  if (!target || !seeker) {
+    return alert("First set the target and interceptor");
+  }
+
+  targetMode = document.getElementById("targetMode").value;
+  trailTarget = [];
+  trailSeeker = [];
+  distance = 0;
+  startTime = null;
+
+  loop();
+};
+
+document.getElementById("resetBtn").onclick = () => {
+  if (target) target.remove();
+  if (seeker) seeker.remove();
+
+  clearTrails();
+  target = seeker = null;
+};
+
+document.getElementById("replayBtn").onclick = () => {
+  if (trailTarget.length === 0) return;
+
+  clearTrails();
+  drawTrail(trailTarget, "red");
+  drawTrail(trailSeeker, "cyan");
+};
+
+// === Simulation ===
+function loop() {
+  if (!startTime) startTime = performance.now();
+
+  updateTarget();
+  if (!updateSeeker()) {
+    requestAnimationFrame(loop);
+  }
+}
+
+function updateTarget() {
+  if (!target) return;
+
+  switch (targetMode) {
+    case "linear":
+      target.x += target.speed;
+      break;
+    case "sine":
+      target.x += target.speed;
+      target.y = target.initialY + 40 * Math.sin(target.x / 40);
+      break;
+    case "random":
+      target.x += target.speed * (Math.random() / 2 + 1);
+      target.y += target.speed * (Math.random() / 2 + 1);
+      break;
+  }
+
+  keepInBounds(target);
+  target.draw();
+  trailTarget.push([target.x, target.y]);
+}
+
+function updateSeeker() {
+  if (!seeker || !target) return false;
+
+  const dx = target.x - seeker.x;
+  const dy = target.y - seeker.y;
+  const dist = Math.hypot(dx, dy);
+
+  if (dist < 9) {
+    updateStats();
+    return true;
+  }
+
+  seeker.x += (seeker.speed * dx) / dist;
+  seeker.y += (seeker.speed * dy) / dist;
+
+  keepInBounds(seeker);
+  seeker.draw();
+  trailSeeker.push([seeker.x, seeker.y]);
+  distance += seeker.speed;
+
+  return false;
+}
+
+// === Helpers ===
+function keepInBounds(element) {
+  if(element.x < 2 || element.x > w-2){
+    target.x = w - target.x; 
+  }
+
+  if(element.y < 2 || element.y > h-2) { target.y = h - target.y; } 
+}
+
+function drawTrail(points, color) {
+  const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+  poly.setAttribute("points", points.map((p) => p.join(",")));
+  poly.setAttribute("fill", "none");
+  poly.setAttribute("stroke", color);
+  svg.appendChild(poly);
+}
+
+function clearTrails() {
+  svg.querySelectorAll("polyline").forEach((el) => el.remove());
+}
+
+function updateStats() {
+  const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+  document.getElementById("stats").innerHTML =
+    `<br>⏱ Time: ${elapsed}s | 📏 Distance: ${distance.toFixed(1)}`;
+}
+
+// === Init ===
+buildTerrain();

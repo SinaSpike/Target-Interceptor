@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>شبیه‌ساز نقطه تعقیب‌کننده</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background:#111; color:#eee; }
+    #sim { border:1px solid #555; background:#222; margin-top:10px; }
+    .btn { margin:5px; padding:6px 12px; background:#444; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+    .btn:hover { background:#666; }
+    #stats { margin-top:10px; }
+  </style>
+</head>
+<body>
+  <h2>Target-Interceptor Visualizer</h2>
+  
+  <div>
+    <label>نوع حرکت هدف: 
+      <select id="targetMode">
+        <option value="static">Static</option>
+        <option value="linear">Linear</option>
+        <option value="sine">Sine</option>
+        <option value="random">Random</option>
+      </select>
+    </label>
+    <button id="startBtn" class="btn">Start Simulator</button>
+    <button id="replayBtn" class="btn">Replay</button>
+    <button id="resetBtn" class="btn">Reset</button>
+
+  </div>
+
+  <svg id="sim" width="1000" height="600"></svg>
+  <div id="stats"></div>
+
+  <script src="scripts/script.js" type= "module"></script>
+</body>
+</html>
