@@ -25,3 +25,7 @@ body {
 #stats { 
     margin-top:10px;
 }
+
+.trail {
+    opacity: 0.2;
+}
